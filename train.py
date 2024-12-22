@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
-IMAGE_SIZE = 256
+IMAGE_SIZE = 128
 NUM_EPOCHS = 32
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 LEARNING_RATE = 0.001
@@ -26,6 +26,7 @@ def dice_similarity_coeff(pred, target, smooth=1e-6):
     '''
     Calculate Dice Similarity Coefficient by calculating
     the number of matched pixels / total pixels.
+    Test loss function.
     '''
     pred = torch.sigmoid(pred)  # Convert output into probability
     intersection = (pred * target).sum(dim=(2, 3))  
@@ -80,7 +81,7 @@ def main():
 
     #Define UNet model, loss function and update optimizer.
     model = mm.UNet().to(DEVICE)
-    criteria = nn.BCELoss().to(DEVICE) #BCE Loss accepts softmaxed tensor while CrossEntropy not.
+    criteria = nn.CrossEntropyLoss().to(DEVICE) #BCE Loss accepts softmaxed tensor while CrossEntropy not.
     optimizer = optim.SGD(model.parameters(), weight_decay=WEIGHT_DECAY, lr = LEARNING_RATE, momentum=MOMENTUM)
 
     for epoch in range(NUM_EPOCHS):
@@ -94,20 +95,19 @@ def main():
             #(Batch size, Channel number, Width, Height)
             optimizer.zero_grad()
             outputs = model(imgs) #(12, 6, 256, 128)  #Segmented to 6 classes
-            print(outputs[0].shape, labels[0].shape)
             loss = criteria(outputs, labels)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
             print('Passed all')
-        torch.save(model.state_dict(), \
+        torch.save('model_state_dict': model.state_dict(), \
+                   'optimizer_state_dict': optimizer.state_dict(), \
             f = '/home/Student/s4722435/miniconda3/envs/new_torch/unet_stuff/model.pth')
         model.eval()
         with torch.no_grad():
             for raw, seg in validation_loader:
                 imgs, labels = raw.to(DEVICE), seg.to(DEVICE)
                 outputs = model(imgs)
-                outputs = torch.softmax(outputs, dim = 1) #Select the most likely class for each pixel
                 loss = criteria(outputs, labels)
                 loss.backward()
                 val_loss += loss.item()
