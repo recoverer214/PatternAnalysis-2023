@@ -134,7 +134,7 @@ class CustomImageDataset(Dataset):
 
     def __getitem__(self, idx):
         #We return segmented image as label.
-        '''
+        
         img = load_data_2D([self.img_files[idx]], normImage=True)[0] #256x128
         img = np.transpose(img, (0, 1, 2))
         label = load_data_2D([self.seg_img_files[idx]], categorical=True)[0] #256x128
@@ -157,7 +157,7 @@ class CustomImageDataset(Dataset):
             label = self.transform(label)
         
         return image, label
-        
+        '''
 
 def keras_dataloader(image_size: int, data_type: str):
     '''
@@ -169,11 +169,13 @@ def keras_dataloader(image_size: int, data_type: str):
     dataset = dict()
     transformation = transforms.Compose(
         [   transforms.ToTensor()
-            transforms.Normalize(
-                [0.5 for _ in range(CHANNELS_IMG)],
-                [0.5 for _ in range(CHANNELS_IMG)],
-            ),
-            0.5 for white/black. Random normalized values for colored.
+         
+            #transforms.Normalize(
+            #    [0.5 for _ in range(CHANNELS_IMG)],
+            #    [0.5 for _ in range(CHANNELS_IMG)],
+            #),
+            #0.5 for white/black. Random normalized values for colored.
+            
         ]
     )
     dataset = CustomImageDataset(KERAS_PATH, data_type, transform = transformation)
@@ -188,12 +190,12 @@ def keras_dataloader(image_size: int, data_type: str):
 
 transformation = transforms.Compose(
         [   transforms.ToTensor(),
-            transforms.RandomHorizontalFlip(p=0.5)
-            transforms.Normalize(
-                [0.5 for _ in range(CHANNELS_IMG)],
-                [0.5 for _ in range(CHANNELS_IMG)],
-            ),
-            0.5 for white/black. Random normalized values for colored.
+            #transforms.RandomHorizontalFlip(p=0.5)
+            #transforms.Normalize(
+            #    [0.5 for _ in range(CHANNELS_IMG)],
+            #    [0.5 for _ in range(CHANNELS_IMG)],
+            #),
+            #0.5 for white/black. Random normalized values for colored.
         ]
     )
 # only if my brain comes back
