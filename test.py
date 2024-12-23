@@ -1,34 +1,37 @@
-PATH = '/home/groups/comp3710/HipMRI_Study_open/keras_slices_data/keras_slices'
-IMAGE_SIZE = 32
-
-import dataset as dst
+import train
+import modules
+import dataset
+import torch
+from PIL import Image
 import numpy as np
-from collections import Counter
 
-test_loader, test_set = dst.keras_dataloader(IMAGE_SIZE, '_test/')
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+MODEL_PATH = '/home/Student/s4722435/miniconda3/envs/new_torch/unet_stuff/model.pth'
 
-for epoch in range(NUM_EPOCHS):
-        print(str(epoch + 1) + '/' + str(NUM_EPOCHS) + 'th iteration')
-        model.train()
-        train_loss = 0.0
-        val_loss = 0.0
-        for raw, seg in train_loader:
-            #Batch index, raw data and segmented data
-            imgs, labels = raw.to(DEVICE), seg.to(DEVICE) #(12, 1, 256, 128) (12, 6, 256, 128)
-            #(Batch size, Channel number, Width, Height)
-            optimizer.zero_grad()
-            model.eval()
-                    with torch.no_grad():
-                        for raw, seg in validation_loader:
-                            imgs, labels = raw.to(DEVICE), seg.to(DEVICE)
-                            outputs = model(imgs)
-                            loss = criteria(outputs, labels)
-                            loss.backward()
-                            val_loss += loss.item()
+def predict(loader):
+    '''
+    Produce the segmented image of given dataset (test dataset) and
+    show the Dice Similarity Coefficient.
+    '''
+    model = modules.UNet().to(DEVICE)  
+    model.load_state_dict(torch.load(MODEL_PATH, weights_only=True))
+    model.eval()
+    dsc = 0.0
+    model.eval()
+    for idx, (raw, seg) in loader:
+        imgs, labels = raw.to(DEVICE), seg.to(DEVICE)
+        outputs = model(imgs)
+        output = outputs.squeeze().cpu().numpy()
+        output = (output * 255).astype(np.uint8)
+        output_img = Image.fromarray(output)
+        output_img.save('seg_picture_' + str(idx) + '.png')
+        dsc = train.dice_similarity_coeff(outputs, labels)
+    dsc = dsc // len(loader)
+    print('Disc Similarity Coefficient', dsc)
 
-b = dst.load_data_2D([PATH + '_seg_train/seg_019_week_5_slice_36.nii.gz'])
-b = b.flatten()
-b = Counter(b)
-np.set_printoptions(threshold=np.inf)
-for key, value in b.items():
-    print(key)
+def main():
+    test_set = dataset.keras_dataloader(256)
+    predict(test_set[0])
+
+if __name__ == '__main__':
+    main()
